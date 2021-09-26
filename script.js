@@ -8,61 +8,76 @@ const sumBtn = document.getElementById("calculate-wealth");
 
 let data = [];
 
-getRandomUser();
-getRandomUser();
-getRandomUser();
-
-async function getRandomUser() {
+const fetchApi = async () => {
   const res = await fetch("https://randomuser.me/api");
   const data = await res.json();
-
-  const user = data.results[0];
-
-  const newUser = {
-    name: user.name.title + "." + " " + user.name.first + " " + user.name.last,
-    wealth: Math.floor(Math.random() * 1000000),
+  const user = {
+    name: data.results[0].name.first + " " + data.results[0].name.last,
+    money: Math.floor(Math.random() * 1000000),
   };
 
-  addData(newUser);
-}
+  addData(user);
+};
 
-//  add new Obj to data array
+//  add user to data
 function addData(obj) {
   data.push(obj);
-
-  updateDom();
-}
-
-//  updateDom
-function updateDom(providedData = data) {
-  //  clear main div
-  main.innerHTML = "<h2><strong>Person</strong> Wealth</h2>";
-
-  providedData.forEach((item) => {
-    const element = document.createElement("div");
-    element.classList.add("person");
-
-    element.innerHTML = `<strong>${item.name}</strong> $ ${formatMoney(
-      item.wealth
-    )}`;
-    main.appendChild(element);
-  });
+  updateUi();
 }
 
 //  double money
 function doubleMoney() {
   data = data.map((user) => {
-    return { ...user, wealth: user.wealth * 2 };
+    return { ...user, money: user.money * 2 };
   });
-  updateDom();
+  updateUi();
 }
 
-//  format number as money https://stackoverflow.com/questions/149055/how-to-format-numbers-as-currency-strings
+//  showMillionaires
+function showMillionaires() {
+  data = data.filter((user) => user.money > 1000000);
+  updateUi();
+}
+
+//  sort by richests
+function sort() {
+  data.sort((a, b) => a.money - b.money);
+  updateUi();
+}
+
+//  sum money
+function sumMoney() {
+  const wealth = data.reduce((acc, user) => (acc += user.money), 0);
+
+  const wealthEl = document.createElement("div");
+  wealthEl.innerHTML = `<h3>Total Wealth: <strong>${formatMoney(
+    wealth
+  )}</strong></h3>`;
+  main.appendChild(wealthEl);
+}
+
+// Format number as money - https://stackoverflow.com/questions/149055/how-to-format-numbers-as-currency-string
 function formatMoney(number) {
-  return number.toFixed(2).replace(/\d(?=(\d{3})+\.)/g, "$&,"); // 12,345.67
+  return "$" + number.toFixed(2).replace(/\d(?=(\d{3})+\.)/g, "$&,");
 }
 
-//  event
-doubleBtn.addEventListener("click", (e) => {
-  doubleMoney();
-});
+//  updateUi
+function updateUi(providedData = data) {
+  main.innerHTML = `<h2><strong>Person</strong> Wealth</h2>`;
+
+  providedData.forEach((item) => {
+    const element = document.createElement("div");
+    element.classList.add("person");
+    element.innerHTML = `<strong>${item.name}</strong> ${formatMoney(
+      item.money
+    )}`;
+    main.appendChild(element);
+  });
+}
+
+//  events
+addUserBtn.addEventListener("click", fetchApi);
+doubleBtn.addEventListener("click", doubleMoney);
+showMillionairesBtn.addEventListener("click", showMillionaires);
+sortBtn.addEventListener("click", sort);
+sumBtn.addEventListener("click", sumMoney);
